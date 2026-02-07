@@ -76,6 +76,7 @@ class VideoListResponse(BaseModel):
     thumbnail_url: Optional[str] = None
     duration_formatted: str
     instructor_name: str
+    category_id: Optional[int] = None
     category_name: str
     is_premium: bool
     view_count: int
