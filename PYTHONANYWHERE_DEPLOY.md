@@ -45,7 +45,7 @@ APP_NAME=Flight Academy API
 APP_VERSION=1.0.0
 DEBUG=False
 
-SECRET_KEY=your-super-secret-key-generate-random-string-here
+SECRET_KEY=bereketdemissie
 
 # SQLite Database (Free tier)
 DATABASE_URL=sqlite+aiosqlite:////home/flightacademy/flight-academy_backend/flight_academy.db
@@ -99,7 +99,15 @@ In Web tab, under "Virtualenv":
 - Enter: `/home/flightacademy/flight-academy_backend/venv`
 - Click the checkmark
 
-### 8.3 Configure WSGI File
+### 7.3 Install a2wsgi (ASGI to WSGI adapter)
+In Bash console:
+```bash
+cd ~/flight-academy_backend
+source venv/bin/activate
+pip install a2wsgi
+```
+
+### 7.4 Configure WSGI File
 Click on the WSGI configuration file link:
 `/var/www/flightacademy_pythonanywhere_com_wsgi.py`
 
@@ -121,19 +129,11 @@ load_dotenv(os.path.join(project_home, '.env'))
 # Import the FastAPI app
 from app.main import app
 
-# ASGI to WSGI adapter for PythonAnywhere
-from asgiref.wsgi import WsgiToAsgi
+# ASGI to WSGI adapter for PythonAnywhere (free tier)
+from a2wsgi import ASGIMiddleware
 
 # This is what PythonAnywhere looks for
-application = WsgiToAsgi(app)
-```
-
-### 8.4 Install asgiref
-In Bash console:
-```bash
-cd ~/flight-academy_backend
-source venv/bin/activate
-pip install asgiref
+application = ASGIMiddleware(app)
 ```
 
 ---
