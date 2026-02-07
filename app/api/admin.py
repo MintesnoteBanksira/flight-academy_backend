@@ -1,5 +1,6 @@
 """
 Admin API endpoints - Database seeding and management
+Version: 2.0 - Added clear and reset endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
