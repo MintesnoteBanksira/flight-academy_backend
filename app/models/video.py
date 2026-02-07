@@ -30,9 +30,14 @@ class Video(Base):
     
     # File info
     video_url = Column(String(500), nullable=False)
+    video_key = Column(String(255), nullable=True)  # R2 storage key
     thumbnail_url = Column(String(500), nullable=True)
+    thumbnail_key = Column(String(255), nullable=True)  # R2 storage key
     duration_seconds = Column(Integer, default=0)
     file_size_bytes = Column(Integer, default=0)
+    
+    # Featured flag
+    is_featured = Column(Boolean, default=False)
     
     # Metadata
     is_premium = Column(Boolean, default=False)

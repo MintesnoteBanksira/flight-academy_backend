@@ -16,3 +16,14 @@ services:
         value: "false"
       - key: UPLOAD_DIR
         value: uploads
+      # Cloudflare R2 Configuration
+      - key: R2_ACCOUNT_ID
+        value: a9d357f79343d4038c9957eb52fdca6e
+      - key: R2_ACCESS_KEY_ID
+        value: f2c1fd313dd4d51f0f101a679cff48f9
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false  # Set this manually in Render dashboard for security
+      - key: R2_BUCKET_NAME
+        value: flight-academy-videos
+      - key: R2_PUBLIC_URL
+        value: https://pub-915af40a190e4aaeae419a28034c0a3a.r2.dev
