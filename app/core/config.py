@@ -21,10 +21,19 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     
     # Database
-    # For development (SQLite)
+    # For development (SQLite), for production use DATABASE_URL env var
     DATABASE_URL: str = "sqlite+aiosqlite:///./flight_academy.db"
-    # For production (PostgreSQL on PythonAnywhere)
-    # DATABASE_URL: str = "postgresql+asyncpg://user:password@host/dbname"
+    
+    @property
+    def async_database_url(self) -> str:
+        """Convert DATABASE_URL to async version if needed"""
+        url = self.DATABASE_URL
+        # Handle PostgreSQL URLs from Render
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://") and "+asyncpg" not in url:
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
     
     # File Storage
     UPLOAD_DIR: str = "uploads"
