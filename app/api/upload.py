@@ -219,6 +219,69 @@ async def get_upload_url(
     }
 
 
+@router.post("/register", summary="Register a video uploaded via presigned URL")
+async def register_video(
+    title: str = Form(...),
+    description: str = Form(""),
+    category_id: int = Form(...),
+    video_key: str = Form(...),  # The R2 key returned from presigned URL
+    video_url: str = Form(...),  # The public URL of the video
+    duration_seconds: int = Form(0),
+    is_premium: bool = Form(False),
+    thumbnail_url: str = Form(""),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Register a video that was uploaded directly to R2 using a presigned URL.
+    Call this after successfully uploading to R2.
+    """
+    if current_user.role not in ['instructor', 'admin']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only instructors can upload videos"
+        )
+    
+    # Get category
+    result = await db.execute(select(Category).where(Category.id == category_id))
+    category = result.scalar_one_or_none()
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found"
+        )
+    
+    # Create video record
+    video = Video(
+        title=title,
+        description=description,
+        video_url=video_url,
+        video_key=video_key,
+        thumbnail_url=thumbnail_url,
+        duration_seconds=duration_seconds,
+        instructor_id=current_user.id,
+        category_id=category_id,
+        is_premium=is_premium,
+        is_published=True,
+    )
+    
+    db.add(video)
+    await db.commit()
+    await db.refresh(video)
+    
+    return {
+        "status": "success",
+        "message": "Video registered successfully",
+        "video": {
+            "id": video.id,
+            "title": video.title,
+            "video_url": video.video_url,
+            "category": category.name,
+            "instructor": current_user.full_name,
+        }
+    }
+
+
 @router.delete("/video/{video_id}", summary="Delete a video")
 async def delete_video(
     video_id: int,
