@@ -88,121 +88,24 @@ async def seed_database(db: AsyncSession = Depends(get_db)):
     )
     db.add(admin)
     
-    await db.flush()
-    
-    # Create videos
-    videos_data = [
-        {
-            "title": "Pre-Flight Inspection Walkthrough",
-            "description": "Complete walkthrough of the pre-flight inspection process. Learn what to check before every flight.",
-            "video_url": "/uploads/videos/sample1.mp4",
-            "thumbnail_url": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800",
-            "duration_seconds": 1245,
-            "category_id": 1,
-            "instructor_id": instructor.id,
-            "view_count": 1250,
-            "is_published": True,
-        },
-        {
-            "title": "Takeoff Procedures - Normal Operations",
-            "description": "Standard takeoff procedures for normal conditions. Covers V-speeds, rotation, and initial climb.",
-            "video_url": "/uploads/videos/sample2.mp4",
-            "thumbnail_url": "https://images.unsplash.com/photo-1559628233-100c798642d4?w=800",
-            "duration_seconds": 1830,
-            "category_id": 2,
-            "instructor_id": instructor.id,
-            "view_count": 980,
-            "is_published": True,
-        },
-        {
-            "title": "Emergency Engine Failure After Takeoff",
-            "description": "Critical procedures for handling engine failure after takeoff. Memory items and decision making.",
-            "video_url": "/uploads/videos/sample3.mp4",
-            "thumbnail_url": "https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=800",
-            "duration_seconds": 2150,
-            "category_id": 6,
-            "instructor_id": instructor.id,
-            "view_count": 2300,
-            "is_premium": True,
-            "is_published": True,
-        },
-        {
-            "title": "ILS Approach Step by Step",
-            "description": "Detailed guide to flying an ILS approach. From approach briefing to landing.",
-            "video_url": "/uploads/videos/sample4.mp4",
-            "thumbnail_url": "https://images.unsplash.com/photo-1474302770737-173ee21bab63?w=800",
-            "duration_seconds": 2400,
-            "category_id": 4,
-            "instructor_id": instructor.id,
-            "view_count": 1800,
-            "is_published": True,
-        },
-        {
-            "title": "Understanding FMS Navigation",
-            "description": "Flight Management System basics. Programming routes and using navigation features.",
-            "video_url": "/uploads/videos/sample5.mp4",
-            "thumbnail_url": "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?w=800",
-            "duration_seconds": 1920,
-            "category_id": 8,
-            "instructor_id": instructor.id,
-            "view_count": 750,
-            "is_published": True,
-        },
-        {
-            "title": "Crosswind Landing Techniques",
-            "description": "Master crosswind landings with proper crab and sideslip techniques.",
-            "video_url": "/uploads/videos/sample6.mp4",
-            "thumbnail_url": "https://images.unsplash.com/photo-1529432067142-4c2ea0c15b94?w=800",
-            "duration_seconds": 1650,
-            "category_id": 5,
-            "instructor_id": instructor.id,
-            "view_count": 2100,
-            "is_published": True,
-        },
-        {
-            "title": "Hydraulic System Deep Dive",
-            "description": "Understanding aircraft hydraulic systems. Components, operation, and failure modes.",
-            "video_url": "/uploads/videos/sample7.mp4",
-            "thumbnail_url": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
-            "duration_seconds": 2700,
-            "category_id": 7,
-            "instructor_id": instructor.id,
-            "view_count": 450,
-            "is_premium": True,
-            "is_published": True,
-        },
-        {
-            "title": "Cruise Flight Optimization",
-            "description": "Optimizing cruise performance. Cost index, step climbs, and fuel management.",
-            "video_url": "/uploads/videos/sample8.mp4",
-            "thumbnail_url": "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=800",
-            "duration_seconds": 1380,
-            "category_id": 3,
-            "instructor_id": instructor.id,
-            "view_count": 620,
-            "is_published": True,
-        },
-    ]
-    
-    for video_data in videos_data:
-        video = Video(**video_data)
-        db.add(video)
-    
     await db.commit()
+    
+    # No demo videos - you'll upload real ones via the app
     
     return {
         "status": "success",
-        "message": "Database seeded successfully!",
+        "message": "Database seeded with categories and users (no demo videos)!",
         "data": {
             "users": 3,
             "categories": 8,
-            "videos": 8,
+            "videos": 0,
         },
         "test_accounts": {
             "instructor": {"email": "captain@flightacademy.com", "password": "password123"},
             "student": {"email": "student@flightacademy.com", "password": "password123"},
             "admin": {"email": "admin@flightacademy.com", "password": "admin123"},
-        }
+        },
+        "note": "Upload your own videos via the instructor panel!"
     }
 
 
