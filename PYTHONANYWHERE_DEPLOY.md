@@ -25,32 +25,12 @@ pip install -r requirements.txt
 ```bash
 cd ~/flight-academy_backend
 source venv/bin/activate
-pip install aiofiles greenlet
+pip install aiofiles greenlet asgiref
 ```
 
 ---
 
-## Step 4: Configure PostgreSQL Database
-
-### 4.1 Create PostgreSQL Database
-1. Go to **Databases** tab on PythonAnywhere
-2. Set a PostgreSQL password (remember this!)
-3. Click **"Initialize PostgreSQL"**
-4. Wait for database to be created
-5. Note the connection details shown:
-   - **Host**: `flightacademy-1234.postgres.pythonanywhere-services.com`
-   - **Database**: `flightacademy$default` (or create a new one)
-
-### 4.2 Create a New Database (Optional but Recommended)
-In the Databases tab, under "Create a database", enter:
-- Database name: `flightacademy`
-- Click "Create"
-
-Your database will be: `flightacademy$flightacademy`
-
----
-
-## Step 5: Create .env File
+## Step 4: Create .env File
 In PythonAnywhere Bash console:
 
 ```bash
@@ -59,7 +39,7 @@ cp env.example.txt .env
 nano .env
 ```
 
-Update with these values (replace YOUR_POSTGRES_PASSWORD):
+Update with these values:
 ```
 APP_NAME=Flight Academy API
 APP_VERSION=1.0.0
@@ -67,11 +47,8 @@ DEBUG=False
 
 SECRET_KEY=your-super-secret-key-generate-random-string-here
 
-# PostgreSQL Database (RECOMMENDED)
-DATABASE_URL=postgresql+asyncpg://flightacademy:YOUR_POSTGRES_PASSWORD@flightacademy-1234.postgres.pythonanywhere-services.com/flightacademy$flightacademy
-
-# Alternative: SQLite (simpler but less robust)
-# DATABASE_URL=sqlite+aiosqlite:////home/flightacademy/flight-academy_backend/flight_academy.db
+# SQLite Database (Free tier)
+DATABASE_URL=sqlite+aiosqlite:////home/flightacademy/flight-academy_backend/flight_academy.db
 
 UPLOAD_DIR=/home/flightacademy/flight-academy_backend/uploads
 ```
@@ -81,9 +58,11 @@ UPLOAD_DIR=/home/flightacademy/flight-academy_backend/uploads
 python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
+Copy the output and paste it as the SECRET_KEY value.
+
 ---
 
-## Step 6: Create Uploads Directory
+## Step 5: Create Uploads Directory
 ```bash
 mkdir -p ~/flight-academy_backend/uploads/videos
 mkdir -p ~/flight-academy_backend/uploads/thumbnails
@@ -92,7 +71,7 @@ chmod -R 755 ~/flight-academy_backend/uploads
 
 ---
 
-## Step 7: Initialize Database
+## Step 6: Initialize Database
 ```bash
 cd ~/flight-academy_backend
 source venv/bin/activate
@@ -106,7 +85,7 @@ This creates test accounts:
 
 ---
 
-## Step 8: Configure Web App
+## Step 7: Configure Web App
 
 ### 8.1 Create Web App
 1. Go to **Web** tab on PythonAnywhere
@@ -159,7 +138,7 @@ pip install asgiref
 
 ---
 
-## Step 9: Configure Static Files
+## Step 8: Configure Static Files
 In Web tab, under "Static files":
 - URL: `/uploads`
 - Directory: `/home/flightacademy/flight-academy_backend/uploads`
@@ -168,12 +147,12 @@ Click the checkmark to save.
 
 ---
 
-## Step 10: Reload Web App
+## Step 9: Reload Web App
 Click the big green **"Reload flightacademy.pythonanywhere.com"** button.
 
 ---
 
-## Step 11: Test Your API
+## Step 10: Test Your API
 
 Your API is now live at:
 - **Main URL**: https://flightacademy.pythonanywhere.com/
@@ -208,9 +187,8 @@ project_home = '/home/flightacademy/flight-academy_backend'
 ```
 
 #### 2. Database Connection Failed
-- Check your PostgreSQL password in .env
-- Make sure the database host matches what's shown in Databases tab
-- For SQLite, use absolute path: `sqlite+aiosqlite:////home/flightacademy/...` (4 slashes!)
+- For SQLite, use absolute path with 4 slashes: `sqlite+aiosqlite:////home/flightacademy/...`
+- Make sure the .env file has the correct path
 
 #### 3. "greenlet" or "aiofiles" not found
 ```bash
