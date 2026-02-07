@@ -219,3 +219,73 @@ async def get_database_stats(db: AsyncSession = Depends(get_db)):
         "videos": videos_count.scalar() or 0,
         "categories": categories_count.scalar() or 0,
     }
+
+
+@router.delete("/clear-demo-videos")
+async def clear_demo_videos(db: AsyncSession = Depends(get_db)):
+    """
+    Clear all demo/seed videos (those with sample URLs).
+    Keeps real uploaded videos (those with R2 URLs).
+    """
+    from sqlalchemy import delete, or_
+    
+    # Delete videos that have demo URLs (not R2 URLs)
+    result = await db.execute(
+        delete(Video).where(
+            or_(
+                Video.video_url.like("/uploads/%"),
+                Video.video_url.like("https://images.unsplash%"),
+                Video.video_url == "",
+                Video.video_url.is_(None),
+                ~Video.video_url.like("%r2.dev%")  # Keep R2 videos
+            )
+        ).where(
+            Video.video_url.notlike("%pub-915af40a190e4aaeae419a28034c0a3a.r2.dev%")
+        )
+    )
+    
+    await db.commit()
+    
+    return {
+        "status": "success",
+        "message": f"Cleared demo videos",
+        "deleted_count": result.rowcount
+    }
+
+
+@router.delete("/clear-all-videos")
+async def clear_all_videos(db: AsyncSession = Depends(get_db)):
+    """
+    Clear ALL videos from the database.
+    WARNING: This deletes everything!
+    """
+    from sqlalchemy import delete
+    
+    result = await db.execute(delete(Video))
+    await db.commit()
+    
+    return {
+        "status": "success",
+        "message": "All videos cleared",
+        "deleted_count": result.rowcount
+    }
+
+
+@router.post("/reset-database")
+async def reset_database(db: AsyncSession = Depends(get_db)):
+    """
+    Reset database: Clear all videos and re-seed with just users and categories.
+    Keeps your account but removes all videos.
+    """
+    from sqlalchemy import delete
+    
+    # Delete all videos
+    await db.execute(delete(Video))
+    
+    await db.commit()
+    
+    return {
+        "status": "success",
+        "message": "Database reset - all videos removed. Categories and users preserved.",
+        "note": "You can now upload fresh videos."
+    }
