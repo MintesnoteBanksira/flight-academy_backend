@@ -15,25 +15,25 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 @router.post("/seed", status_code=status.HTTP_201_CREATED)
-async def seed_database(db: AsyncSession = Depends(get_db)):
+async def seed_database(force: bool = False, db: AsyncSession = Depends(get_db)):
     """
     Seed the database with initial test data.
-    WARNING: This will skip if data already exists.
+    WARNING: This will skip if data already exists unless force=True.
     """
     # Check if data already exists
-    result = await db.execute(select(User))
-    existing_user = result.scalar_one_or_none()
+    result = await db.execute(select(Category))
+    existing_category = result.scalar_one_or_none()
     
-    if existing_user:
+    if existing_category and not force:
         return {
             "status": "skipped",
-            "message": "Database already has data. Skipping seed."
+            "message": "Database already has categories. Use ?force=true to re-seed."
         }
     
     # Create tables if they don't exist
     await create_tables()
     
-    # Create categories
+    # Create categories (check if each exists first)
     categories_data = [
         {"name": "Pre-Flight", "description": "Pre-flight procedures and checks", "icon": "checklist", "color": "#4CAF50", "order": 1},
         {"name": "Takeoff", "description": "Takeoff procedures and techniques", "icon": "flight_takeoff", "color": "#2196F3", "order": 2},
@@ -45,48 +45,62 @@ async def seed_database(db: AsyncSession = Depends(get_db)):
         {"name": "Navigation", "description": "Navigation and flight planning", "icon": "map", "color": "#795548", "order": 8},
     ]
     
-    categories = []
+    categories_created = 0
     for cat_data in categories_data:
-        category = Category(**cat_data)
-        db.add(category)
-        categories.append(category)
+        # Check if category already exists
+        existing = await db.execute(select(Category).where(Category.name == cat_data["name"]))
+        if not existing.scalar_one_or_none():
+            category = Category(**cat_data)
+            db.add(category)
+            categories_created += 1
     
     await db.flush()
     
-    # Create users
-    instructor = User(
-        email="captain@flightacademy.com",
-        hashed_password=get_password_hash("password123"),
-        first_name="Captain",
-        last_name="Smith",
-        role=UserRole.INSTRUCTOR,
-        rank="Captain",
-        airline="Flight Academy",
-        is_verified=True,
-    )
-    db.add(instructor)
+    # Create users (check if each exists first)
+    users_created = 0
     
-    student = User(
-        email="student@flightacademy.com",
-        hashed_password=get_password_hash("password123"),
-        first_name="John",
-        last_name="Pilot",
-        role=UserRole.STUDENT,
-        rank="First Officer",
-        airline="Flight Academy",
-        is_verified=True,
-    )
-    db.add(student)
+    existing_instructor = await db.execute(select(User).where(User.email == "captain@flightacademy.com"))
+    if not existing_instructor.scalar_one_or_none():
+        instructor = User(
+            email="captain@flightacademy.com",
+            hashed_password=get_password_hash("password123"),
+            first_name="Captain",
+            last_name="Smith",
+            role=UserRole.INSTRUCTOR,
+            rank="Captain",
+            airline="Flight Academy",
+            is_verified=True,
+        )
+        db.add(instructor)
+        users_created += 1
     
-    admin = User(
-        email="admin@flightacademy.com",
-        hashed_password=get_password_hash("admin123"),
-        first_name="Admin",
-        last_name="User",
-        role=UserRole.ADMIN,
-        is_verified=True,
-    )
-    db.add(admin)
+    existing_student = await db.execute(select(User).where(User.email == "student@flightacademy.com"))
+    if not existing_student.scalar_one_or_none():
+        student = User(
+            email="student@flightacademy.com",
+            hashed_password=get_password_hash("password123"),
+            first_name="John",
+            last_name="Pilot",
+            role=UserRole.STUDENT,
+            rank="First Officer",
+            airline="Flight Academy",
+            is_verified=True,
+        )
+        db.add(student)
+        users_created += 1
+    
+    existing_admin = await db.execute(select(User).where(User.email == "admin@flightacademy.com"))
+    if not existing_admin.scalar_one_or_none():
+        admin = User(
+            email="admin@flightacademy.com",
+            hashed_password=get_password_hash("admin123"),
+            first_name="Admin",
+            last_name="User",
+            role=UserRole.ADMIN,
+            is_verified=True,
+        )
+        db.add(admin)
+        users_created += 1
     
     await db.commit()
     
@@ -94,10 +108,10 @@ async def seed_database(db: AsyncSession = Depends(get_db)):
     
     return {
         "status": "success",
-        "message": "Database seeded with categories and users (no demo videos)!",
+        "message": f"Database seeded! Created {categories_created} categories and {users_created} users.",
         "data": {
-            "users": 3,
-            "categories": 8,
+            "users_created": users_created,
+            "categories_created": categories_created,
             "videos": 0,
         },
         "test_accounts": {
