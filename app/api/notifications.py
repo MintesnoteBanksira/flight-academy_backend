@@ -2,7 +2,6 @@
 Notification API endpoints
 """
 import json
-import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, and_
@@ -11,7 +10,7 @@ from typing import Optional, List
 from datetime import datetime
 
 from ..core.database import get_db
-from ..core.config import settings
+from ..core.firebase import send_push_notification, send_push_notification_batch
 from ..models import User, DeviceRegistration, NotificationPreference, Notification, NotificationType, Video
 from .deps import get_current_user
 
@@ -306,7 +305,7 @@ async def send_notification_to_user(
     
     # Send push notification to all devices
     for device in devices:
-        await _send_fcm_notification(device.fcm_token, title, body, data)
+        await send_push_notification(device.fcm_token, title, body, data)
     
     return notification
 
@@ -334,14 +333,20 @@ async def notify_new_video(db: AsyncSession, video: Video):
     body = f"'{video.title}' is now available"
     data = {"video_id": str(video.id), "type": "new_video"}
     
-    # Get unique user IDs for in-app notifications
+    # Collect tokens and user IDs for batch sending
+    tokens_to_send = []
     user_ids_notified = set()
     
     for device, prefs in rows:
         # Check preferences (if no prefs record, default is enabled)
         if prefs is None or prefs.new_videos:
-            await _send_fcm_notification(device.fcm_token, title, body, data)
+            tokens_to_send.append(device.fcm_token)
             user_ids_notified.add(device.user_id)
+    
+    # Send batch push notifications using Firebase Admin SDK
+    if tokens_to_send:
+        result = await send_push_notification_batch(tokens_to_send, title, body, data)
+        print(f"Sent {result['success_count']} notifications, {result['failure_count']} failed")
     
     # Create in-app notifications for each user
     for user_id in user_ids_notified:
@@ -357,37 +362,3 @@ async def notify_new_video(db: AsyncSession, video: Video):
     await db.commit()
     
     return len(user_ids_notified)
-
-
-async def _send_fcm_notification(fcm_token: str, title: str, body: str, data: dict = None):
-    """Send FCM push notification using Firebase HTTP v1 API"""
-    # For simplicity, we'll use the legacy HTTP API which doesn't require OAuth
-    # In production, you should use the v1 API with proper service account auth
-    
-    fcm_server_key = getattr(settings, 'FCM_SERVER_KEY', None)
-    if not fcm_server_key:
-        return False
-    
-    url = "https://fcm.googleapis.com/fcm/send"
-    headers = {
-        "Authorization": f"key={fcm_server_key}",
-        "Content-Type": "application/json"
-    }
-    
-    payload = {
-        "to": fcm_token,
-        "notification": {
-            "title": title,
-            "body": body,
-            "sound": "default"
-        },
-        "data": data or {}
-    }
-    
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(url, json=payload, headers=headers)
-            return response.status_code == 200
-    except Exception as e:
-        print(f"FCM notification error: {e}")
-        return False

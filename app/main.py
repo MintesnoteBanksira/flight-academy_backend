@@ -9,6 +9,7 @@ import os
 
 from .core.config import settings
 from .core.database import create_tables
+from .core.firebase import initialize_firebase
 from .api import api_router
 
 
@@ -17,6 +18,9 @@ async def lifespan(app: FastAPI):
     """Application lifecycle - startup and shutdown events"""
     # Startup: Create database tables
     await create_tables()
+    
+    # Initialize Firebase for push notifications
+    initialize_firebase()
     
     # Create upload directories
     os.makedirs(os.path.join(settings.UPLOAD_DIR, "videos"), exist_ok=True)
