@@ -46,6 +46,12 @@ class NotificationResponse(BaseModel):
     created_at: datetime
 
 
+class DeviceCountResponse(BaseModel):
+    total_devices: int
+    student_devices: int
+    instructor_devices: int
+
+
 class SendNotificationRequest(BaseModel):
     title: str
     body: str
@@ -107,6 +113,56 @@ async def unregister_device(
     await db.commit()
     
     return {"message": "Device unregistered"}
+
+
+@router.get("/debug/devices", response_model=DeviceCountResponse)
+async def get_device_count(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Debug endpoint: Get count of registered devices (admin only)"""
+    from ..models import UserRole
+    
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin only")
+    
+    # Get total devices
+    result = await db.execute(
+        select(DeviceRegistration).where(DeviceRegistration.is_active == True)
+    )
+    all_devices = result.scalars().all()
+    
+    # Get student devices
+    result = await db.execute(
+        select(DeviceRegistration)
+        .join(User, DeviceRegistration.user_id == User.id)
+        .where(
+            and_(
+                User.role == UserRole.STUDENT,
+                DeviceRegistration.is_active == True
+            )
+        )
+    )
+    student_devices = result.scalars().all()
+    
+    # Get instructor devices
+    result = await db.execute(
+        select(DeviceRegistration)
+        .join(User, DeviceRegistration.user_id == User.id)
+        .where(
+            and_(
+                User.role == UserRole.INSTRUCTOR,
+                DeviceRegistration.is_active == True
+            )
+        )
+    )
+    instructor_devices = result.scalars().all()
+    
+    return DeviceCountResponse(
+        total_devices=len(all_devices),
+        student_devices=len(student_devices),
+        instructor_devices=len(instructor_devices)
+    )
 
 
 @router.get("/preferences", response_model=NotificationPreferencesResponse)
