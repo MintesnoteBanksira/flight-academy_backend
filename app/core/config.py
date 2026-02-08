@@ -28,12 +28,17 @@ class Settings(BaseSettings):
     def async_database_url(self) -> str:
         """Convert DATABASE_URL to async version if needed"""
         url = self.DATABASE_URL
-        # Handle PostgreSQL URLs from Render
+        # Handle PostgreSQL URLs from Render or Aiven
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
         elif url.startswith("postgresql://") and "+asyncpg" not in url:
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url
+    
+    @property
+    def is_production(self) -> bool:
+        """Check if running in production (PostgreSQL)"""
+        return "postgresql" in self.DATABASE_URL or "postgres" in self.DATABASE_URL
     
     # File Storage
     UPLOAD_DIR: str = "uploads"

@@ -4,12 +4,23 @@ Database configuration and session management
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from .config import settings
+import ssl
+
+# SSL configuration for Aiven and other cloud PostgreSQL providers
+connect_args = {}
+if settings.is_production:
+    # Create SSL context for secure connection
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE  # For Aiven, set to CERT_REQUIRED in production with proper cert
+    connect_args = {"ssl": ssl_context}
 
 # Create async engine (use async_database_url for proper driver)
 engine = create_async_engine(
     settings.async_database_url,
     echo=settings.DEBUG,
-    future=True
+    future=True,
+    connect_args=connect_args if settings.is_production else {}
 )
 
 # Create async session factory
