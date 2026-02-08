@@ -33,6 +33,11 @@ class Settings(BaseSettings):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
         elif url.startswith("postgresql://") and "+asyncpg" not in url:
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        # Remove sslmode from URL as asyncpg handles SSL differently
+        if "?sslmode=" in url:
+            url = url.split("?sslmode=")[0]
+        elif "&sslmode=" in url:
+            url = url.replace("&sslmode=require", "").replace("&sslmode=prefer", "")
         return url
     
     @property

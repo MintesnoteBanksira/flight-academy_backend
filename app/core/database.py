@@ -9,18 +9,21 @@ import ssl
 # SSL configuration for Aiven and other cloud PostgreSQL providers
 connect_args = {}
 if settings.is_production:
-    # Create SSL context for secure connection
+    # Create SSL context for secure connection (required for Aiven)
     ssl_context = ssl.create_default_context()
     ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE  # For Aiven, set to CERT_REQUIRED in production with proper cert
+    ssl_context.verify_mode = ssl.CERT_NONE  # Accept self-signed certs from Aiven
     connect_args = {"ssl": ssl_context}
 
 # Create async engine (use async_database_url for proper driver)
 engine = create_async_engine(
     settings.async_database_url,
-    echo=settings.DEBUG,
+    echo=False,  # Disable SQL logging in production
     future=True,
-    connect_args=connect_args if settings.is_production else {}
+    connect_args=connect_args,
+    pool_size=5,
+    max_overflow=10,
+    pool_pre_ping=True,  # Verify connections before using them
 )
 
 # Create async session factory
