@@ -8,6 +8,7 @@ from .videos import router as videos_router
 from .categories import router as categories_router
 from .admin import router as admin_router
 from .upload import router as upload_router
+from .stats import router as stats_router
 
 api_router = APIRouter()
 
@@ -17,3 +18,4 @@ api_router.include_router(videos_router)
 api_router.include_router(categories_router)
 api_router.include_router(admin_router)
 api_router.include_router(upload_router)
+api_router.include_router(stats_router)
