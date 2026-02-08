@@ -3,7 +3,7 @@ Video Upload API endpoints
 Handles video and thumbnail uploads to Cloudflare R2
 """
 
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 from app.api.deps import get_db, get_current_user
@@ -11,6 +11,7 @@ from app.models.user import User
 from app.models.video import Video, Category
 from app.core.r2_storage import upload_file, delete_file, get_presigned_upload_url, R2_PUBLIC_URL
 from sqlalchemy import select
+from .notifications import notify_new_video
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
@@ -221,6 +222,7 @@ async def get_upload_url(
 
 @router.post("/register", summary="Register a video uploaded via presigned URL")
 async def register_video(
+    background_tasks: BackgroundTasks,
     title: str = Form(...),
     description: str = Form(""),
     category_id: int = Form(...),
@@ -268,6 +270,13 @@ async def register_video(
     db.add(video)
     await db.commit()
     await db.refresh(video)
+    
+    # Send push notification to students about new video
+    try:
+        await notify_new_video(db, video)
+    except Exception as e:
+        # Don't fail the upload if notification fails
+        print(f"Failed to send notification: {e}")
     
     return {
         "status": "success",

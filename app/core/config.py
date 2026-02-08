@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     # PythonAnywhere specific
     PYTHONANYWHERE_USERNAME: Optional[str] = None
     
+    # Firebase Cloud Messaging
+    FCM_SERVER_KEY: Optional[str] = None
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
